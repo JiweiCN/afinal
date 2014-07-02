@@ -15,98 +15,26 @@
  */
 package net.tsz.afinal;
 
-import java.lang.reflect.Field;
-
-import net.tsz.afinal.annotation.view.EventListener;
-import net.tsz.afinal.annotation.view.ViewInject;
+import net.tsz.afinal.inject.Inject;
 import android.app.Activity;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.AdapterView;
 
 public abstract class FinalActivity extends Activity {
 
-
 	public void setContentView(int layoutResID) {
 		super.setContentView(layoutResID);
-		initInjectedView(this);
+		Inject.initInjectedView(this);
 	}
-
 
 	public void setContentView(View view, LayoutParams params) {
 		super.setContentView(view, params);
-		initInjectedView(this);
+		Inject.initInjectedView(this);
 	}
-
 
 	public void setContentView(View view) {
 		super.setContentView(view);
-		initInjectedView(this);
+		Inject.initInjectedView(this);
 	}
-	
 
-	public static void initInjectedView(Activity activity){
-		initInjectedView(activity, activity.getWindow().getDecorView());
-	}
-	
-	public static void initInjectedView(Object injectedSource, View sourceView) {
-		Field[] fields = injectedSource.getClass().getDeclaredFields();
-		View view;
-		if (fields != null && fields.length > 0) {
-			try {
-				for (Field field : fields) {
-					field.setAccessible(true);
-
-					// just inject view and view's subclass, otherwise skip
-					if (!View.class.isAssignableFrom(field.getType())
-							|| field.get(injectedSource) != null) {
-						continue;
-					}
-
-					ViewInject viewInject = field
-							.getAnnotation(ViewInject.class);
-					if (viewInject != null) {
-
-						int viewId = viewInject.id();
-						view = sourceView.findViewById(viewId);
-						field.set(injectedSource, view);
-
-						EventListener listener = new EventListener(
-								injectedSource);
-						if (viewInject.click()) {
-							view.setOnClickListener(listener);
-						}
-
-						if (viewInject.longClick()) {
-							view.setOnLongClickListener(listener);
-						}
-
-						//AdapterView be in common use
-						if (viewInject.itemClick()) {
-							if (view instanceof AdapterView<?>) {
-								((AdapterView<?>) view)
-										.setOnItemClickListener(listener);
-							}
-						}
-
-						if (viewInject.itemLongClick()) {
-							if (view instanceof AdapterView<?>) {
-								((AdapterView<?>) view)
-										.setOnItemLongClickListener(listener);
-							}
-						}
-
-						if (viewInject.select()) {
-							if (view instanceof AdapterView<?>) {
-								((AdapterView<?>) view)
-										.setOnItemSelectedListener(listener);
-							}
-						}
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
 }
